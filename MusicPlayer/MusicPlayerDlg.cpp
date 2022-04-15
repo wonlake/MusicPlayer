@@ -6,18 +6,14 @@
 #include "MusicPlayer.h"
 #include "MusicPlayerDlg.h"
 #include "afxdialogex.h"
-#include <tinyXML/tinyxml.h>
+#include <tinyxml.h>
 #include <atlsimpstr.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-#ifdef _DEBUG
-#pragma comment( lib, "tinyxml_d.lib" )
-#else
-#pragma comment( lib, "tinyxml.lib" )
-#endif
+#pragma comment( lib, "libtinyxml.lib" )
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -919,7 +915,7 @@ void CMusicPlayerDlg::OnNMReleasedcaptureSlider2(NMHDR *pNMHDR, LRESULT *pResult
 
 }
 
-HRESULT CMusicPlayerDlg::OnSysTrayNotify( WPARAM wParam, LPARAM lParam )
+LRESULT CMusicPlayerDlg::OnSysTrayNotify( WPARAM wParam, LPARAM lParam )
 {
 	switch( lParam )
 	{

@@ -1,11 +1,7 @@
 #include "StdAfx.h"
 #include "MP3Decodec.h"
 
-#ifdef _DEBUG
-#pragma comment(lib, "libmpg123_d")
-#else
-#pragma comment(lib, "libmpg123")
-#endif
+#pragma comment(lib, "libmpg123.lib")
 
 MP3Decodec::MP3Decodec(void)
 {

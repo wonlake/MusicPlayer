@@ -1,7 +1,7 @@
 #pragma once
 
 //mp3½âÂë¿â
-#include <mpg123/mpg123.h>
+#include <mpg123.h>
 #include "Decodec.h"
 #include <queue>
 
@@ -17,7 +17,7 @@ private:
 	ALuint			m_uiFormat;
 	int				m_iChannels;
 	ALuint			m_uiBufferSize;
-	ALuint			m_uiBytesWritten;
+	size_t			m_uiBytesWritten;
 
 	ALuint			m_uiBuffers[4];
 	ALuint			m_uiSource;

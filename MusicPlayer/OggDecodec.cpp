@@ -1,15 +1,8 @@
 #include "StdAfx.h"
 #include "OggDecodec.h"
 
-#ifdef _DEBUG
-#pragma comment(lib, "libogg_d")
-#pragma comment(lib, "libvorbisfile_d")
-#pragma comment(lib, "libvorbis_d")
-#else
-#pragma comment(lib, "libogg")
-#pragma comment(lib, "libvorbisfile")
-#pragma comment(lib, "libvorbis")
-#endif
+#pragma comment(lib, "libogg.lib")
+#pragma comment(lib, "libvorbis.lib")
 
 OggDecodec::OggDecodec(void)
 {

@@ -5,7 +5,7 @@
 #include "WaveDecodec.h"
 #include "OggDecodec.h"
 
-#pragma comment(lib, "OpenAL32")
+#pragma comment(lib, "OpenAL32.lib")
 
 AudioPlayer::AudioPlayer()
 {
