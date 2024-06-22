@@ -6,14 +6,13 @@
 #include "MusicPlayer.h"
 #include "MusicPlayerDlg.h"
 #include "afxdialogex.h"
-#include <tinyxml.h>
 #include <atlsimpstr.h>
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-#pragma comment( lib, "libtinyxml.lib" )
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -1005,100 +1004,69 @@ void CMusicPlayerDlg::OnLvnEndlabeleditMusiclist(NMHDR *pNMHDR, LRESULT *pResult
 
 void CMusicPlayerDlg::LoadSettings()
 {
-	TiXmlDocument doc;
-	if( !doc.LoadFile( "settings.xml" ) )
+	std::ifstream f("D:\\Projects\\bin\\setting.json");
+	if( !f.is_open())
 		return;
 
-	TiXmlDeclaration* pDeclaration = 
-		doc.FirstChild()->ToDeclaration();
+	auto doc = nlohmann::json::parse(f); 
 
-	int iEncoding = CP_ACP;
-	if( pDeclaration != NULL )
+	int iEncoding = CP_UTF8;
+
+	for(auto& item : doc.items())
 	{
-		if( pDeclaration->Encoding() )
+		const std::string& lstName = item.value()["name"];
+		if (lstName.empty())
+			continue;
+
+		auto len = MultiByteToWideChar(iEncoding, 0, lstName.c_str(), -1, NULL, 0);
+		auto pwName = std::make_shared<wchar_t[]>(len);
+		MultiByteToWideChar(iEncoding, 0, lstName.c_str(), -1, pwName.get(), len);
+		m_vecMusicList.push_back(std::make_pair(pwName.get(), std::vector<std::wstring>()));
+
+		auto& refMusicNames = m_vecMusicList[m_vecMusicList.size() - 1].second;
+
+		for (auto& music : item.value()["list"])
 		{
-			if( stricmp( pDeclaration->Encoding(), "utf8" ) == 0 ||
-				stricmp( pDeclaration->Encoding(), "utf-8" ) == 0 )
-			{
-				doc.LoadFile( "settings.xml", TIXML_ENCODING_UTF8 );
-				iEncoding = CP_UTF8;
-			}
+			const std::string& path = music;
+			len = MultiByteToWideChar(iEncoding, 0, path.c_str(), -1, NULL, 0);
+			auto pwMusicName = std::make_shared<wchar_t[]>(len);
+			MultiByteToWideChar(iEncoding, 0, path.c_str(), -1, pwMusicName.get(), len);
+
+			refMusicNames.push_back(pwMusicName.get());
 		}
-	}
-
-	TiXmlElement* pRoot = doc.RootElement();
-	TiXmlElement* pList = pRoot->FirstChildElement();
-	while( pList != NULL )
-	{
-		TiXmlAttribute* pName = pList->FirstAttribute();
-		TiXmlElement* pMusicName = pList->FirstChildElement();
-		int len = MultiByteToWideChar( iEncoding, 0, pName->Value(), -1, NULL, 0 );
-		wchar_t* pwName = new wchar_t[len];
-		MultiByteToWideChar( iEncoding, 0, pName->Value(), -1, pwName, len );		
-		m_vecMusicList.push_back( std::make_pair(pwName, std::vector<std::wstring>()) );
-		delete[] pwName;
-
-		std::vector<std::wstring>& refMusicNames = m_vecMusicList[m_vecMusicList.size() - 1].second;
-		while( pMusicName != NULL )
-		{
-			len = MultiByteToWideChar( iEncoding, 0, pMusicName->GetText(), -1, NULL, 0 );
-			wchar_t* pwMusicName = new wchar_t[len];
-			MultiByteToWideChar( iEncoding, 0, pMusicName->GetText(), -1, pwMusicName, len );	
-
-			refMusicNames.push_back( pwMusicName );
-			delete[] pwMusicName;
-
-			pMusicName = pMusicName->NextSiblingElement();
-		}
-		pList = pList->NextSiblingElement();
 	}
 }
 
 void CMusicPlayerDlg::SaveSettings()
 {
-	TiXmlDocument doc;
+	nlohmann::json doc;
 
 	int iEncoding = CP_UTF8;
-	if( iEncoding == CP_UTF8 )
-	{
-		TiXmlDeclaration declare("1.0", "UTF-8", "no");
-		doc.InsertEndChild( declare );
-	}
-	else
-	{
-		TiXmlDeclaration declare("1.0", "GB2312", "no");
-		doc.InsertEndChild( declare );
-	}
-
-	TiXmlElement elemRoot("settings");	
-	TiXmlNode* pElemRoot = doc.InsertEndChild( elemRoot );
 
 	for( int i = 0; i < m_vecMusicList.size(); ++i )
 	{
 		int len = WideCharToMultiByte( iEncoding, 0, m_vecMusicList[i].first.c_str(), -1, NULL, 0, NULL, NULL );
-		char* pName = new char[len];
-		WideCharToMultiByte( iEncoding, 0, m_vecMusicList[i].first.c_str(), -1, pName, len, NULL, NULL );
+		auto plistName = std::make_shared<char[]>(len);
+		WideCharToMultiByte( iEncoding, 0, m_vecMusicList[i].first.c_str(), -1, plistName.get(), len, NULL, NULL );
 
-		TiXmlElement elemList("list");
-		elemList.SetAttribute( "name", pName );
-		delete[] pName;
-
-		TiXmlNode* pElemList = pElemRoot->InsertEndChild(elemList);
+		nlohmann::json lst;
 
 		for( int j = 0; j < m_vecMusicList[i].second.size(); ++j )
 		{
-			TiXmlElement elemFileName("filename");
-			TiXmlNode* pElemFileName = pElemList->InsertEndChild( elemFileName );
-
 			int len = WideCharToMultiByte( iEncoding, 0, m_vecMusicList[i].second[j].c_str(), -1, NULL, 0, NULL, NULL );
-			char* pName = new char[len];
-			WideCharToMultiByte( iEncoding, 0, m_vecMusicList[i].second[j].c_str(), -1, pName, len, NULL, NULL );
+			auto pName = std::make_shared<char[]>(len);
+			WideCharToMultiByte( iEncoding, 0, m_vecMusicList[i].second[j].c_str(), -1, pName.get(), len, NULL, NULL);
 
-			TiXmlText strFileName( pName );
-			pElemFileName->InsertEndChild( strFileName );
-
-			delete[] pName;
-		}		
+			lst.push_back(pName.get()); 
+		}
+		nlohmann::json musicList;
+		musicList["name"] = plistName.get();
+		musicList["list"] = lst;
+		doc.push_back(musicList);
 	}
-	doc.SaveFile( "settings.xml" );
+
+	std::ofstream of("setting.json"); 
+
+	std::string&& s = std::move(doc.dump(4));
+	of.write(s.data(), s.size());
 }
